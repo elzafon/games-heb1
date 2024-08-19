@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק זיהוי אותיות בעברית</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        #game-container {
+            text-align: center;
+            width: 100%;
+            max-width: 768px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #top-section {
+            font-size: 120px;
+            margin: 20px 0;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #bottom-section {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            justify-content: center;
+        }
+        .letter-button {
+            font-size: 36px;
+            padding: 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .letter-button:hover {
+            transform: scale(1.05);
+        }
+        #end-screen {
+            display: none;
+            text-align: center;
+        }
+        #play-again {
+            font-size: 24px;
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="top-section"></div>
+        <div id="bottom-section"></div>
+    </div>
+    <div id="end-screen">
+        <h1>הצלחת למצוא את כל האותיות!</h1>
+        <button id="play-again">רוצה לשחק שוב?</button>
+    </div>
+
+    <script>
+        const letters = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת'];
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#B19CD9', '#FF92A9', '#77DD77', '#836953', '#779ECB', '#FFB347', '#87CEFA', '#F49AC2', '#CFCFC4', '#B39EB5', '#FFD1DC', '#C5E384', '#B0E0E6', '#FDFD96'];
+        let currentLetters = [];
+        let currentLetter = '';
+        let isWaiting = false;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function createButtons() {
+            const bottomSection = document.getElementById('bottom-section');
+            bottomSection.innerHTML = '';
+            shuffleArray(currentLetters);
+            currentLetters.forEach((letter, index) => {
+                const button = document.createElement('button');
+                button.textContent = letter;
+                button.classList.add('letter-button');
+                button.style.backgroundColor = colors[index % colors.length];
+                button.onclick = () => checkLetter(letter, button);
+                bottomSection.appendChild(button);
+            });
+        }
+
+        function setNewLetter() {
+            const topSection = document.getElementById('top-section');
+            currentLetter = currentLetters[Math.floor(Math.random() * currentLetters.length)];
+            topSection.textContent = currentLetter;
+        }
+
+        function checkLetter(letter, button) {
+            if (isWaiting) return;
+            
+            isWaiting = true;
+            document.querySelectorAll('.letter-button').forEach(btn => btn.classList.add('disabled'));
+            
+            const letterIndex = letters.indexOf(letter);
+            const audio = new Audio(`sounds/letter_${letterIndex + 1}.mp4`);
+            audio.play();
+            
+            setTimeout(() => {
+                if (letter === currentLetter) {
+                    button.style.display = 'none';
+                    currentLetters = currentLetters.filter(l => l !== letter);
+                    if (currentLetters.length > 0) {
+                        setNewLetter();
+                    } else {
+                        endGame();
+                        return;
+                    }
+                }
+                document.querySelectorAll('.letter-button').forEach(btn => btn.classList.remove('disabled'));
+                isWaiting = false;
+            }, 5000);
+        }
+
+        function endGame() {
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+        }
+
+        function startGame() {
+            currentLetters = [...letters];
+            shuffleArray(currentLetters);
+            currentLetters = currentLetters.slice(0, 20);
+            createButtons();
+            setNewLetter();
+            document.getElementById('game-container').style.display = 'block';
+            document.getElementById('end-screen').style.display = 'none';
+        }
+
+        document.getElementById('play-again').onclick = startGame;
+        startGame();
+    </script>
+</body>
+</html>
